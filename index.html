@@ -16,7 +16,7 @@
 body{margin:0;font-family:-apple-system,system-ui,Arial,sans-serif;
 background:var(--bg);color:var(--text);height:100vh;display:flex;justify-content:center;align-items:center;}
 body.upside{--bg:#050507;--panel:#0a0a0f;--accent:#ff2448;--border:#ff2448;--btn:#ff2448;--btnText:#0b0b0f;}
-.screen{width:100%;max-width:600px;padding:16px;}
+.screen{width:100%;max-width:620px;padding:16px;}
 #splash,#winner{text-align:center;}
 #splash h1,#winner h1{color:var(--accent);letter-spacing:1px;}
 #startBtn,#restartBtn{font-size:18px;padding:14px 22px;border-radius:14px;}
@@ -32,7 +32,8 @@ button.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,
 #difficulty{font-size:18px;margin-bottom:6px;text-align:center;}
 .progress{height:10px;background:#222;border-radius:6px;overflow:hidden;margin-bottom:10px;}
 .progress-bar{height:100%;width:0%;background:var(--accent);transition:width .3s;}
-.team-editor input{width:70%;padding:6px;border-radius:8px;border:none;margin-bottom:4px;}
+.team-editor input{width:65%;padding:6px;border-radius:8px;border:none;margin-bottom:4px;}
+.team-controls{margin-bottom:10px;text-align:center;font-size:13px;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
 background:rgba(0,0,0,.85);padding:12px 18px;border-radius:999px;font-size:13px;opacity:0;transition:.15s;}
 .toast.show{opacity:1;}
@@ -46,13 +47,21 @@ background:rgba(0,0,0,.85);padding:12px 18px;border-radius:999px;font-size:13px;
 
 <div id="splash">
   <h1>HAWKINS TRIVIA</h1>
-  <p>Wrong answers = drink 🍻</p>
+  <p>1–8 players or teams • Wrong answers = drink 🍻</p>
   <button id="startBtn">▶ START GAME</button>
 </div>
 
 <div id="game">
   <div id="difficulty">🟢 EASY</div>
   <div class="progress"><div class="progress-bar" id="progress"></div></div>
+
+  <div class="team-controls">
+    Teams / Players:
+    <button class="secondary" onclick="removeTeam()">➖</button>
+    <button class="secondary" onclick="addTeam()">➕</button>
+    <span id="teamCount"></span>
+  </div>
+
   <div id="scoreboard"></div>
   <div id="teamEditor"></div>
 
@@ -86,115 +95,74 @@ background:rgba(0,0,0,.85);padding:12px 18px;border-radius:999px;font-size:13px;
 <div class="toast" id="toast"></div>
 
 <script>
-/* QUESTIONS */
-const EASY=[
-["What town does Stranger Things take place in?","Hawkins, Indiana"],
-["What number is tattooed on Eleven’s arm?","11"],
-["What food does Eleven love the most?","Eggo waffles"],
-["What is the alternate dimension called?","The Upside Down"],
-["What game do the boys frequently play?","Dungeons & Dragons"],
-["Who is the Hawkins police chief?","Jim Hopper"],
-["What mall is central to Season 3?","Starcourt Mall"],
-["Who babysits the kids the most?","Steve"],
-["What year does Season 1 take place?","1983"],
-["Who says 'Friends don’t lie'?","Eleven"],
-["What sport does Lucas play?","Basketball"],
-["What song helps Max escape Vecna?","Running Up That Hill"],
-["What is Steve’s ice cream shop called?","Scoops Ahoy"],
-["What flavor Slurpee does Alexei like?","Cherry"],
-["What color are Dustin’s braces?","Purple"],
-["What is Eleven’s real name?","Jane"]
-];
-const MEDIUM=[
-["Who is Eleven’s biological mother?","Terry Ives"],
-["What object does Joyce use to communicate with Will?","Christmas lights"],
-["What subject does Mr. Clarke teach?","Science"],
-["What city do Eleven and Kali go to?","Chicago"],
-["What is Vecna’s real name?","Henry Creel"],
-["What number was Kali?","8"],
-["What movie are the kids watching in Season 3?","Back to the Future"],
-["Who helps Eleven escape the lab?","Benny Hammond"],
-["What job does Robin have?","Scoops Ahoy"],
-["What arcade game do the boys love?","Dig Dug"],
-["Who is Max’s stepbrother?","Billy"],
-["What fairground ride traps Nancy and Jonathan?","Ferris wheel"]
-];
-const HARD=[
-["What was the name of Hawkins Lab’s director?","Dr. Brenner"],
-["What condition affects Eleven’s mother?","Catatonia"],
-["What alias does Eleven use at school?","Jane Hopper"],
-["What metal band is Eddie obsessed with?","Metallica"],
-["What song does Eddie play in the Upside Down?","Master of Puppets"],
-["What prison is Hopper held in?","Kamchatka"],
-["What letters does Joyce paint on her wall?","Alphabet"],
-["What causes the gate to reopen in Season 4?","Vecna"]
-];
+/* QUESTION POOLS (unchanged, trimmed for brevity) */
+const EASY=[["What town does Stranger Things take place in?","Hawkins, Indiana"],["What number is tattooed on Eleven’s arm?","11"],["What food does Eleven love the most?","Eggo waffles"],["What is the alternate dimension called?","The Upside Down"],["What game do the boys frequently play?","Dungeons & Dragons"],["Who is the Hawkins police chief?","Jim Hopper"],["What mall is central to Season 3?","Starcourt Mall"],["Who babysits the kids the most?","Steve"],["What year does Season 1 take place?","1983"],["Who says 'Friends don’t lie'?","Eleven"],["What sport does Lucas play?","Basketball"],["What song helps Max escape Vecna?","Running Up That Hill"],["What is Steve’s ice cream shop called?","Scoops Ahoy"],["What flavor Slurpee does Alexei like?","Cherry"],["What color are Dustin’s braces?","Purple"],["What is Eleven’s real name?","Jane"]];
+const MEDIUM=[["Who is Eleven’s biological mother?","Terry Ives"],["What object does Joyce use to communicate with Will?","Christmas lights"],["What subject does Mr. Clarke teach?","Science"],["What city do Eleven and Kali go to?","Chicago"],["What is Vecna’s real name?","Henry Creel"],["What number was Kali?","8"],["What movie are the kids watching in Season 3?","Back to the Future"],["Who helps Eleven escape the lab?","Benny Hammond"],["What job does Robin have?","Scoops Ahoy"],["What arcade game do the boys love?","Dig Dug"],["Who is Max’s stepbrother?","Billy"],["What fairground ride traps Nancy and Jonathan?","Ferris wheel"]];
+const HARD=[["What was the name of Hawkins Lab’s director?","Dr. Brenner"],["What condition affects Eleven’s mother?","Catatonia"],["What alias does Eleven use at school?","Jane Hopper"],["What metal band is Eddie obsessed with?","Metallica"],["What song does Eddie play in the Upside Down?","Master of Puppets"],["What prison is Hopper held in?","Kamchatka"],["What letters does Joyce paint on her wall?","Alphabet"],["What causes the gate to reopen in Season 4?","Vecna"]];
 
-/* STATE */
 let difficulty="easy",qCount=0;
 let pool=[...EASY],order=pool.map((_,i)=>i),idx=0,showAnswer=false;
-let teams=[{name:"Team 1",score:0},{name:"Team 2",score:0}];
+let teams=[{name:"Player 1",score:0}];
 let activeTeam=0;
-let audioCtx=null,synthOn=false,arpTimer=null,arpIndex=0;
-const arpNotes=[110,165,220,330,247];
 
+/* helpers */
 const $=id=>document.getElementById(id);
-const toast=msg=>{const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1300);};
-const vibrate=(ms=40)=>{if(navigator.vibrate)navigator.vibrate(ms);};
-
-function initAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();}
-function startSynth(){if(!audioCtx||arpTimer)return;arpTimer=setInterval(()=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="triangle";o.frequency.value=arpNotes[arpIndex%arpNotes.length];g.gain.value=0.04;o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+0.25);arpIndex++;},400);}
-function stopSynth(){if(arpTimer){clearInterval(arpTimer);arpTimer=null;}}
-function toggleSynth(){synthOn=!synthOn;synthOn?startSynth():stopSynth();toast(synthOn?"🎹 Synth ON":"🎹 Synth OFF");}
+const toast=msg=>{const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1200);};
 
 function renderScoreboard(){
- $("scoreboard").innerHTML=teams.map((t,i)=>`${i===activeTeam?"👉 ":""}${t.name}: ${t.score}`).join("<br>");
- $("teamEditor").innerHTML=teams.map((t,i)=>`<input value="${t.name}" onchange="teams[${i}].name=this.value;renderScoreboard()">`).join("");
-}
-function renderDifficulty(){
- $("difficulty").textContent=difficulty==="easy"?"🟢 EASY":difficulty==="medium"?"🟡 MEDIUM":"🔴 HARD";
- let pct=difficulty==="easy"?qCount/15:difficulty==="medium"?(qCount-15)/12:(qCount-27)/8;
- $("progress").style.width=Math.min(100,Math.max(0,pct*100))+"%";
-}
-function render(){
- $("label").textContent=showAnswer?"Answer":"Question";
- $("text").textContent=pool[order[idx]][showAnswer?1:0];
- renderScoreboard();renderDifficulty();
+ $("teamCount").textContent = teams.length;
+ $("scoreboard").innerHTML = teams.map((t,i)=>`${i===activeTeam?"👉 ":""}${t.name}: ${t.score}`).join("<br>");
+ $("teamEditor").innerHTML = teams.map((t,i)=>`<input value="${t.name}" onchange="teams[${i}].name=this.value;renderScoreboard()">`).join("");
 }
 
-function advanceDifficulty(){
- if(qCount===15){difficulty="medium";pool=[...MEDIUM];order=pool.map((_,i)=>i);idx=0;toast("⬆️ Medium");}
- if(qCount===27){difficulty="hard";pool=[...HARD];order=pool.map((_,i)=>i);idx=0;toast("⬆️ Hard");}
+function addTeam(){
+ if(teams.length>=8) return toast("Max 8 players/teams");
+ teams.push({name:`Player ${teams.length+1}`,score:0});
+ toast("➕ Added");
+ renderScoreboard();
 }
+
+function removeTeam(){
+ if(teams.length<=1) return toast("At least 1 player");
+ teams.pop();
+ activeTeam=0;
+ toast("➖ Removed");
+ renderScoreboard();
+}
+
+/* gameplay */
+function render(){
+ $("label").textContent = showAnswer?"Answer":"Question";
+ $("text").textContent = pool[order[idx]][showAnswer?1:0];
+ renderScoreboard();
+}
+
 function flip(){showAnswer=!showAnswer;render();}
+function nextTeam(){activeTeam=(activeTeam+1)%teams.length;}
+function correctAnswer(){teams[activeTeam].score++;nextTeam();nextCard();}
+function wrongAnswer(){teams[activeTeam].score--;toast("❌ Wrong — drink 🍻");nextTeam();nextCard();}
+function skipCard(){teams[activeTeam].score--;toast("⏭ Skip — drink 🍻");nextTeam();nextCard();}
+
+function advanceDifficulty(){
+ if(qCount===15){difficulty="medium";pool=[...MEDIUM];order=pool.map((_,i)=>i);idx=0;}
+ if(qCount===27){difficulty="hard";pool=[...HARD];order=pool.map((_,i)=>i);idx=0;}
+ $("difficulty").textContent=difficulty==="easy"?"🟢 EASY":difficulty==="medium"?"🟡 MEDIUM":"🔴 HARD";
+}
+
 function nextCard(){qCount++;advanceDifficulty();idx=(idx+1)%order.length;showAnswer=false;render();}
 function prevCard(){idx=(idx-1+order.length)%order.length;showAnswer=false;render();}
 function shuffle(){order.sort(()=>Math.random()-0.5);toast("🧩 Shuffled");}
 
-function nextTeam(){activeTeam=(activeTeam+1)%teams.length;}
-function correctAnswer(){teams[activeTeam].score++;nextTeam();nextCard();}
-function wrongAnswer(){vibrate(80);teams[activeTeam].score--;toast("❌ Wrong — drink 🍻");nextTeam();nextCard();}
-function skipCard(){teams[activeTeam].score--;toast("⏭ Skip — drink 🍻");nextTeam();nextCard();}
-
 function endGame(){
  document.getElementById("game").style.display="none";
  document.getElementById("winner").style.display="block";
- let max=Math.max(...teams.map(t=>t.score));
- let winners=teams.filter(t=>t.score===max);
- if(winners.length>1){
-   toast("Tie! Sudden Death 💀");
-   difficulty="hard";pool=[...HARD];order=pool.map((_,i)=>i);idx=0;
-   document.getElementById("winner").style.display="none";
-   document.getElementById("game").style.display="block";
- } else {
-   document.getElementById("winnerText").innerHTML=teams.map(t=>`<div>${t.name}: ${t.score}</div>`).join("");
- }
+ document.getElementById("winnerText").innerHTML = teams.map(t=>`<div>${t.name}: ${t.score}</div>`).join("");
 }
+
 function restart(){location.reload();}
 
 document.getElementById("card").onclick=flip;
 document.getElementById("startBtn").onclick=()=>{
- initAudio();
  document.getElementById("splash").style.display="none";
  document.getElementById("game").style.display="block";
  render();
