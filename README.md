@@ -65,7 +65,7 @@
 
 Hosted via GitHub Pages:
 ```
-https://<TPoe25>.github.io/hawkins-trivia
+https://TPoe25.github.io/hawkins-trivia
 ```
 
 # 🛠 Tech Stack
@@ -76,12 +76,8 @@ https://<TPoe25>.github.io/hawkins-trivia
 - No frameworks, no dependencies — just clean, readable code
 
 # 🧩 How to Run Locally
-git clone https://github.com/TPoe25/hawkins-trivia
-cd hawkins-trivia
-
-
-Open index.html in your browser
-(or serve it locally if you prefer)
+https://github.com/TPoe25/hawkins-trivia
+can go to share and click add to home screen to save as an App
 
 # 🎉 Intended Use
 
