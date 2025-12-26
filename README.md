@@ -76,8 +76,9 @@ https://TPoe25.github.io/hawkins-trivia
 - No frameworks, no dependencies — just clean, readable code
 
 # 🧩 How to Run Locally
-https://github.com/TPoe25/hawkins-trivia
-can go to share and click add to home screen to save as an App
+https://TPoe25.github.io/hawkins-trivia
+
+- You can go to share and click add to home screen to save as an App
 
 # 🎉 Intended Use
 
